@@ -5,8 +5,15 @@ import ipdb
 
 
 def reset_database():
-    Department.drop_table()
-    Department.create_table()
+    CURSOR.execute("DROP TABLE IF EXISTS departments")
+    CURSOR.execute("""
+        CREATE TABLE departments (
+            id INTEGER PRIMARY KEY,
+            name TEXT,
+            location TEXT
+        )
+    """)
+    CONN.commit()
 
     Department.create("Payroll", "Building A, 5th Floor")
     Department.create("Human Resources", "Building C, East Wing")

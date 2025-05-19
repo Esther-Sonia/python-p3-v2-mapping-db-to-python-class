@@ -2,6 +2,8 @@ from __init__ import CURSOR, CONN
 
 
 class Department:
+    all = {}
+    
 
     def __init__(self, name, location, id=None):
         self.id = id
@@ -47,12 +49,50 @@ class Department:
         self.id = CURSOR.lastrowid
 
     @classmethod
+
+    def instance_from_db(cls, row):
+        department = cls.all.get(row[0])
+        if department:
+            department.name = row[1]
+            department.location = row[2]
+        else:
+            department = cls(row[1], row[2])
+            department.id = row[0]
+            cls.all[department.id] = department
+        return department
+    
+    @classmethod
+    def get_all(cls):
+        sql = "SELECT * FROM departments"
+        CURSOR.execute(sql)
+        rows = CURSOR.fetchall()
+        return [cls.instance_from_db(row) for row in rows]
+    
+    @classmethod
     def create(cls, name, location):
         """ Initialize a new Department instance and save the object to the database """
         department = cls(name, location)
         department.save()
         return department
-
+  
+    @classmethod
+    def find_by_id(cls, id):
+        sql = "SELECT * FROM departments WHERE id = ?"
+        CURSOR.execute(sql, (id,))
+        row = CURSOR.fetchone()
+        if row:
+            return cls.instance_from_db(row)
+        return None
+    
+    @classmethod
+    def find_by_name(cls, name):
+        sql = "SELECT * FROM departments WHERE name = ?"
+        CURSOR.execute(sql, (name,))
+        row = CURSOR.fetchone()
+        if row:
+            return cls.instance_from_db(row)
+        return None
+    
     def update(self):
         """Update the table row corresponding to the current Department instance."""
         sql = """
@@ -72,3 +112,5 @@ class Department:
 
         CURSOR.execute(sql, (self.id,))
         CONN.commit()
+        self.id = None
+        
